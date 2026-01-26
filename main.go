@@ -12,6 +12,9 @@ import (
 	"xpm-synth/internal/generator"
 )
 
+// Version can be injected at build time via -ldflags
+var Version = "v1.0-dev"
+
 // generates random hex palette
 // takes: size n
 // returns: slice of hex strings
@@ -31,13 +34,29 @@ func generateRandomPalette(n int) []string {
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	// CLI flags
+	// cli flags setup
 	widthPtr := flag.Int("w", 128, "Width of the texture")
 	heightPtr := flag.Int("h", 128, "Height of the texture")
 	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
+	versionPtr := flag.Bool("version", false, "Print version information")
+
+	// custom usage message
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "xpm-synth: advanced procedural texture synthesizer\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n  xpm-synth [flags]\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
+
+	// check version first
+	if *versionPtr {
+		fmt.Printf("xpm-synth %s\n", Version)
+		os.Exit(0)
+	}
 
 	// validation
 	validAlgos := map[string]bool{
