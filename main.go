@@ -38,7 +38,7 @@ func main() {
 	// cli flags setup
 	widthPtr := flag.Int("w", 128, "Width of the texture")
 	heightPtr := flag.Int("h", 128, "Height of the texture")
-	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute'")
+	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
 	versionPtr := flag.Bool("version", false, "Print version information")
@@ -64,7 +64,7 @@ func main() {
 		"noise": true, "xor": true, "circles": true,
 		"mandelbrot": true, "julia": true, "melting": true,
 		"creature": true, "pastel": true, "attractor": true,
-		"cute": true,
+		"cute": true, "cutebunny": true,
 	}
 
 	if !validAlgos[*algoPtr] {
@@ -97,6 +97,15 @@ func main() {
 		bgColor := "None"
 
 		colors = []string{bgColor, bodyColor, eyeColor}
+	} else if *algoPtr == "cutebunny" {
+		// soft whites, pinks, browns
+		palettes := [][]string{
+			{"None", "#FFFFFF", "#FF69B4"}, // white bunny, pink eyes
+			{"None", "#FFC0CB", "#000000"}, // pink bunny, black eyes
+			{"None", "#D2B48C", "#5C4033"}, // brown bunny, dark eyes
+			{"None", "#E6E6FA", "#4B0082"}, // lavender bunny, indigo eyes
+		}
+		colors = palettes[rand.Intn(len(palettes))]
 	}
 
 	if *randColorsPtr {
