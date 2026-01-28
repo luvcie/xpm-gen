@@ -38,7 +38,7 @@ func main() {
 	// cli flags setup
 	widthPtr := flag.Int("w", 128, "Width of the texture")
 	heightPtr := flag.Int("h", 128, "Height of the texture")
-	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny'")
+	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
 	versionPtr := flag.Bool("version", false, "Print version information")
@@ -64,7 +64,7 @@ func main() {
 		"noise": true, "xor": true, "circles": true,
 		"mandelbrot": true, "julia": true, "melting": true,
 		"creature": true, "pastel": true, "attractor": true,
-		"cute": true, "cutebunny": true,
+		"cute": true, "cutebunny": true, "physarum": true,
 	}
 
 	if !validAlgos[*algoPtr] {
@@ -74,7 +74,7 @@ func main() {
 
 	// palette setup
 	colors := []string{"#000000", "#39FF14", "#FF69B4", "#00FFFF", "#FFFF00", "#BF00FF"}
-	chars := []string{"a", "b", "c", "d", "e", "f"}
+	chars := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"}
 
 	if *algoPtr == "creature" {
 		colors = []string{"#000000", "#2b0000", "#660000", "#4a4a4a", "#e0e0e0", "#ffea00"}
@@ -106,6 +106,25 @@ func main() {
 			{"None", "#E6E6FA", "#4B0082"}, // lavender bunny, indigo eyes
 		}
 		colors = palettes[rand.Intn(len(palettes))]
+	} else if *algoPtr == "physarum" {
+		// generate a random neon gradient
+		// black -> dark color -> bright color -> white
+		baseHue := rand.Float64() * 360.0
+		colors = make([]string, 16)
+		colors[0] = "#000000" // background
+		for i := 1; i < 16; i++ {
+			// ramp up value and saturation
+			t := float64(i) / 15.0
+			// hue shifts slightly for interest
+			h := math.Mod(baseHue + (t * 30.0), 360.0)
+			s := 100.0 - (t * 20.0) // desaturate slightly towards white
+			v := 30.0 + (t * 70.0)  // get brighter
+			
+			// push the last few colors to pure white
+			if i > 13 { s = 0; v = 100 }
+			
+			colors[i] = hsvToHex(h, s, v)
+		}
 	}
 
 	if *randColorsPtr {
