@@ -9,7 +9,7 @@ import (
 )
 
 // converts grid to xpm string
-// formats header, palette, and pixel data for xpm3 standard
+// does all the header stuff, palette setup, and dumps pixel data for xpm3
 // takes: grid (2d array), config
 // returns: xpm content string
 func GridToXPM(grid [][]int, cfg config.Config) string {
@@ -18,7 +18,11 @@ func GridToXPM(grid [][]int, cfg config.Config) string {
 	header += fmt.Sprintf("\"%d %d %d %d\",\n", cfg.Width, cfg.Height, len(cfg.Colors), 1)
 
 	for i, color := range cfg.Colors {
-		header += fmt.Sprintf("\"%s c %s\",\n", cfg.Chars[i], color)
+		if color == "None" {
+			header += fmt.Sprintf("\"%s c None\",\n", cfg.Chars[i])
+		} else {
+			header += fmt.Sprintf("\"%s c %s\",\n", cfg.Chars[i], color)
+		}
 	}
 
 	for y := 0; y < cfg.Height; y++ {
@@ -35,13 +39,13 @@ func GridToXPM(grid [][]int, cfg config.Config) string {
 }
 
 // saves content to a unique filename
-// checks existing files to prevent overwrites, increments counter
+// checks if file exists to avoid overwriting stuff, increments counter if needed
 // takes: algorithm name, content string
 // returns: filename used
 // mutates: filesystem (creates new .xpm file)
 func SaveUniqueFile(algo string, content string) string {
 	for i := 0; i < 1000; i++ {
-		name := fmt.Sprintf("trippy_%s_%d.xpm", algo, i)
+		name := fmt.Sprintf("xpmgen_%s_%d.xpm", algo, i)
 		if _, err := os.Stat(name); os.IsNotExist(err) {
 			err := os.WriteFile(name, []byte(content), 0644)
 			if err != nil {
@@ -52,7 +56,7 @@ func SaveUniqueFile(algo string, content string) string {
 		}
 	}
 	timestamp := time.Now().Unix()
-	name := fmt.Sprintf("trippy_%s_%d.xpm", algo, timestamp)
+	name := fmt.Sprintf("xpmgen_%s_%d.xpm", algo, timestamp)
 	os.WriteFile(name, []byte(content), 0644)
 	return name
 }
