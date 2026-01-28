@@ -39,6 +39,9 @@ func GenerateGrid(cfg config.Config) [][]int {
 	if cfg.Algorithm == "physarum" {
 		return runPhysarum(cfg)
 	}
+	if cfg.Algorithm == "coral" {
+		return runCoral(cfg)
+	}
 	if cfg.Algorithm == "attractor" {
 		return runAttractor(cfg)
 	}

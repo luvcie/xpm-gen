@@ -38,7 +38,7 @@ func main() {
 	// cli flags setup
 	widthPtr := flag.Int("w", 128, "Width of the texture")
 	heightPtr := flag.Int("h", 128, "Height of the texture")
-	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum'")
+	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum', 'coral'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
 	versionPtr := flag.Bool("version", false, "Print version information")
@@ -64,7 +64,7 @@ func main() {
 		"noise": true, "xor": true, "circles": true,
 		"mandelbrot": true, "julia": true, "melting": true,
 		"creature": true, "pastel": true, "attractor": true,
-		"cute": true, "cutebunny": true, "physarum": true,
+		"cute": true, "cutebunny": true, "physarum": true, "coral": true,
 	}
 
 	if !validAlgos[*algoPtr] {
@@ -125,6 +125,9 @@ func main() {
 			
 			colors[i] = hsvToHex(h, s, v)
 		}
+	} else if *algoPtr == "coral" {
+		// electric blue / cyan / magenta gradient
+		colors = []string{"#000000", "#000033", "#000066", "#000099", "#0000CC", "#0000FF", "#0055FF", "#00AAFF", "#00FFFF", "#55FFFF", "#AAFFFF", "#FFFFFF", "#FF00FF", "#FF55FF"}
 	}
 
 	if *randColorsPtr {
