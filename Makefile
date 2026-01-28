@@ -1,5 +1,5 @@
 # Name of the binary
-NAME = xpm-synth
+NAME = xpm-gen
 
 # Versioning
 # Base version

@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"xpm-synth/internal/config"
+	"xpm-gen/internal/config"
 )
 
 // calculates pixel color for mandelbrot set

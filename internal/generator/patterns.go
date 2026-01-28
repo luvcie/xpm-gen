@@ -3,7 +3,7 @@ package generator
 import (
 	"math"
 	"math/rand"
-	"xpm-synth/internal/config"
+	"xpm-gen/internal/config"
 )
 
 // generates simple static noise

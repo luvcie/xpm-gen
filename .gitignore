@@ -5,3 +5,5 @@ creatures
 *.txt
 *.xpm
 *.png
+xpm-gen
+xpm-synth

@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"xpm-synth/internal/config"
+	"xpm-gen/internal/config"
 )
 
 // converts grid to xpm string

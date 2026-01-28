@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"xpm-synth/internal/config"
-	"xpm-synth/internal/exporter"
-	"xpm-synth/internal/generator"
+	"xpm-gen/internal/config"
+	"xpm-gen/internal/exporter"
+	"xpm-gen/internal/generator"
 )
 
 // Version can be injected at build time via -ldflags
@@ -44,8 +44,8 @@ func main() {
 
 	// custom usage message
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "xpm-synth: advanced procedural texture synthesizer\n\n")
-		fmt.Fprintf(os.Stderr, "Usage:\n  xpm-synth [flags]\n\n")
+		fmt.Fprintf(os.Stderr, "xpm-gen: advanced procedural texture synthesizer\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n  xpm-gen [flags]\n\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")
 		flag.PrintDefaults()
 	}
@@ -54,7 +54,7 @@ func main() {
 
 	// check version first
 	if *versionPtr {
-		fmt.Printf("xpm-synth %s\n", Version)
+		fmt.Printf("xpm-gen %s\n", Version)
 		os.Exit(0)
 	}
 

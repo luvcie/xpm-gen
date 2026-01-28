@@ -2,7 +2,7 @@ package generator
 
 import (
 	"math/rand"
-	"xpm-synth/internal/config"
+	"xpm-gen/internal/config"
 )
 
 // allocates and populates the color grid based on configuration
