@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"math"
 	"math/rand"
 	"xpm-gen/internal/config"
 )
@@ -67,6 +68,29 @@ func GenerateGrid(cfg config.Config) [][]int {
 				colorIdx = 0
 			}
 			grid[y][x] = colorIdx
+		}
+	}
+	return grid
+}
+
+// GenerateFromExpression generates a grid using a custom Expression
+func GenerateFromExpression(cfg config.Config, expr Expression) [][]int {
+	grid := make([][]int, cfg.Height)
+	w, h := float64(cfg.Width), float64(cfg.Height)
+	
+	for y := 0; y < cfg.Height; y++ {
+		grid[y] = make([]int, cfg.Width)
+		for x := 0; x < cfg.Width; x++ {
+			// Evaluate expression
+			val := expr.Eval(float64(x), float64(y), w, h)
+			
+			// Map result to color index
+			// We use Mod and Abs to ensure it stays within bounds
+			// Multiply by length to use the full range
+			idx := int(math.Abs(val) * float64(len(cfg.Colors)))
+			idx = idx % len(cfg.Colors)
+			
+			grid[y][x] = idx
 		}
 	}
 	return grid

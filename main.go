@@ -38,8 +38,9 @@ func main() {
 	// cli flags setup
 	widthPtr := flag.Int("w", 128, "Width of the texture")
 	heightPtr := flag.Int("h", 128, "Height of the texture")
-	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum', 'coral'")
+	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum', 'coral', 'random'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
+	randomGenPtr := flag.Bool("random", false, "Generate a unique random algorithm")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
 	versionPtr := flag.Bool("version", false, "Print version information")
 
@@ -65,9 +66,20 @@ func main() {
 		"mandelbrot": true, "julia": true, "melting": true,
 		"creature": true, "pastel": true, "attractor": true,
 		"cute": true, "cutebunny": true, "physarum": true, "coral": true,
+		"random_gen": true, // allow our internal name
 	}
 
-	if !validAlgos[*algoPtr] {
+	if *algoPtr == "random" {
+		keys := make([]string, 0, len(validAlgos))
+		for k := range validAlgos {
+			if k != "random_gen" { // exclude the internal one from selection
+				keys = append(keys, k)
+			}
+		}
+		*algoPtr = keys[rand.Intn(len(keys))]
+	}
+
+	if !validAlgos[*algoPtr] && !*randomGenPtr {
 		fmt.Printf("Error: Unknown algorithm '%s'\n", *algoPtr)
 		os.Exit(1)
 	}
@@ -142,10 +154,33 @@ func main() {
 		Chars:     chars,
 	}
 
-	fmt.Printf("Generating %dx%d texture using '%s'\n", cfg.Width, cfg.Height, cfg.Algorithm)
+	var grid [][]int
+	
+	if *randomGenPtr {
+		cfg.Algorithm = "random_gen"
+		// Generate a new random expression
+		expr := generator.GenerateRandomExpression(5 + rand.Intn(5)) // Depth 5-10
+		algoString := expr.String()
+		fmt.Printf("Generated Algorithm: %s\n", algoString)
+		
+		// Save the algorithm to a file
+		// Use a timestamp to ensure uniqueness and match the image filename pattern approximately
+		timestamp := time.Now().Unix()
+		algoFilename := fmt.Sprintf("xpmgen_random_%d.algo", timestamp)
+		if err := os.WriteFile(algoFilename, []byte(algoString), 0644); err != nil {
+			fmt.Printf("Error saving algorithm file: %v\n", err)
+		} else {
+			fmt.Printf("Saved algorithm to %s\n", algoFilename)
+		}
 
-	// execute pipeline
-	grid := generator.GenerateGrid(cfg)
+		// Generate the grid using this expression
+		grid = generator.GenerateFromExpression(cfg, expr)
+	} else {
+		fmt.Printf("Generating %dx%d texture using '%s'\n", cfg.Width, cfg.Height, cfg.Algorithm)
+		// execute pipeline
+		grid = generator.GenerateGrid(cfg)
+	}
+
 	xpmContent := exporter.GridToXPM(grid, cfg)
 	fileName := exporter.SaveUniqueFile(cfg.Algorithm, xpmContent)
 
