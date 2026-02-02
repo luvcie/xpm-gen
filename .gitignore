@@ -1,9 +1,10 @@
 *.xpm
+*.png
+*.algo
+*.gen
 documentation
 docs
 creatures
 *.txt
-*.xpm
-*.png
 xpm-gen
 xpm-synth
