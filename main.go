@@ -6,15 +6,31 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/chzyer/readline"
 	"xpm-gen/internal/config"
 	"xpm-gen/internal/exporter"
 	"xpm-gen/internal/generator"
+	"xpm-gen/internal/importer"
 )
 
-// Version can be injected at build time via -ldflags
+// version can be injected at build time via -ldflags
 var Version = "v1.0-dev"
+
+// returns an ansi string that paints the background with the given hex color
+func colorBlock(hex string) string {
+	if len(hex) != 7 || hex[0] != '#' {
+		return ""
+	}
+	r, _ := strconv.ParseInt(hex[1:3], 16, 64)
+	g, _ := strconv.ParseInt(hex[3:5], 16, 64)
+	b, _ := strconv.ParseInt(hex[5:7], 16, 64)
+	// ansi truecolor background: \033[48;2;r;g;bm
+	return fmt.Sprintf("\033[48;2;%d;%d;%dm      \033[0m", r, g, b)
+}
 
 // generates random hex palette
 // takes: size n
@@ -41,6 +57,7 @@ func main() {
 	algoPtr := flag.String("algo", "xor", "Algorithm: 'noise', 'xor', 'circles', 'mandelbrot', 'julia', 'melting', 'creature', 'pastel', 'attractor', 'cute', 'cutebunny', 'physarum', 'coral', 'random'")
 	randColorsPtr := flag.Bool("randcolors", false, "Randomize the color palette")
 	randomGenPtr := flag.Bool("random", false, "Generate a unique random algorithm")
+	recolorPtr := flag.String("recolor", "", "Recolor an existing XPM file (interactive)")
 	pngPtr := flag.Bool("png", false, "Convert output to PNG (requires ImageMagick)")
 	versionPtr := flag.Bool("version", false, "Print version information")
 
@@ -57,6 +74,102 @@ func main() {
 	// check version first
 	if *versionPtr {
 		fmt.Printf("xpm-gen %s\n", Version)
+		os.Exit(0)
+	}
+
+	// recolor mode
+	if *recolorPtr != "" {
+		fmt.Printf("Reading %s...\n", *recolorPtr)
+		data, err := importer.ReadXPM(*recolorPtr)
+		if err != nil {
+			fmt.Printf("Error reading XPM: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Recoloring %s (%dx%d, %d colors)\n", *recolorPtr, data.Width, data.Height, data.NumColors)
+		newColors := make([]string, len(data.PaletteKeys))
+
+		// initialize readline
+		rl, err := readline.New("")
+		if err != nil {
+			fmt.Printf("Error initializing readline: %v\n", err)
+			os.Exit(1)
+		}
+		defer rl.Close()
+
+		for i, charCode := range data.PaletteKeys {
+			oldColor := data.Colors[charCode]
+			preview := colorBlock(oldColor)
+			
+			prompt := fmt.Sprintf("Color %d: %s %s (mapped to '%s') -> New hex color (e.g., #FF0000) [Enter to keep]: ", i+1, preview, oldColor, charCode)
+			rl.SetPrompt(prompt)
+			
+			line, err := rl.Readline()
+			if err != nil { // eof or ctrl+c
+				break
+			}
+			
+			input := strings.TrimSpace(line)
+			if input == "" {
+				newColors[i] = oldColor
+			} else {
+				// auto-prepend '#' if missing
+				if !strings.HasPrefix(input, "#") && len(input) == 6 {
+					input = "#" + input
+				}
+				newColors[i] = input
+			}
+		}
+
+		// reconstruct grid
+		fmt.Println("Reconstructing grid...")
+		charMap := make(map[string]int)
+		for i, k := range data.PaletteKeys {
+			charMap[k] = i
+		}
+
+		grid := make([][]int, data.Height)
+		for y, row := range data.Pixels {
+			grid[y] = make([]int, data.Width)
+			for x := 0; x < data.Width; x++ {
+				start := x * data.CharsPerPixel
+				end := start + data.CharsPerPixel
+				if end > len(row) {
+					// safe fallback
+				end = len(row)
+				}
+			char := row[start:end]
+			if idx, ok := charMap[char]; ok {
+				grid[y][x] = idx
+			} else {
+				grid[y][x] = 0 // default to 0 if unknown
+			}
+			}
+		}
+
+		// create config for exporter
+		cfg := config.Config{
+			Width:     data.Width,
+			Height:    data.Height,
+			Algorithm: "recolored",
+			Colors:    newColors,
+			Chars:     data.PaletteKeys,
+		}
+
+		// export
+		xpmContent := exporter.GridToXPM(grid, cfg)
+		// we'll use the original filename base + _recolored
+		fileName := exporter.SaveUniqueFile("recolored", xpmContent)
+		fmt.Printf("Success! Generated %s\n", fileName)
+		
+		if *pngPtr {
+			if err := exporter.ConvertToPNG(fileName); err != nil {
+				fmt.Printf("Error converting to PNG: %v\n", err)
+			} else {
+				fmt.Printf("Success! PNG created.\n")
+			}
+		}
+
 		os.Exit(0)
 	}
 
@@ -158,13 +271,13 @@ func main() {
 	
 	if *randomGenPtr {
 		cfg.Algorithm = "random_gen"
-		// Generate a new random expression
-		expr := generator.GenerateRandomExpression(5 + rand.Intn(5)) // Depth 5-10
+		// generate a new random expression
+		expr := generator.GenerateRandomExpression(5 + rand.Intn(5)) // depth 5-10
 		algoString := expr.String()
 		fmt.Printf("Generated Algorithm: %s\n", algoString)
 		
-		// Save the algorithm to a file
-		// Use a timestamp to ensure uniqueness and match the image filename pattern approximately
+		// save the algorithm to a file
+		// use a timestamp to ensure uniqueness and match the image filename pattern approximately
 		timestamp := time.Now().Unix()
 		algoFilename := fmt.Sprintf("xpmgen_random_%d.algo", timestamp)
 		if err := os.WriteFile(algoFilename, []byte(algoString), 0644); err != nil {
@@ -173,7 +286,7 @@ func main() {
 			fmt.Printf("Saved algorithm to %s\n", algoFilename)
 		}
 
-		// Generate the grid using this expression
+		// generate the grid using this expression
 		grid = generator.GenerateFromExpression(cfg, expr)
 	} else {
 		fmt.Printf("Generating %dx%d texture using '%s'\n", cfg.Width, cfg.Height, cfg.Algorithm)
