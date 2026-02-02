@@ -101,7 +101,7 @@ func main() {
 			oldColor := data.Colors[charCode]
 			preview := colorBlock(oldColor)
 			
-			prompt := fmt.Sprintf("Color %d: %s %s (mapped to '%s') -> New hex color (e.g., #FF0000) [Enter to keep]: ", i+1, preview, oldColor, charCode)
+			prompt := fmt.Sprintf("Color %d: %s %s (mapped to '%s') -> New hex, 'random', or 'keep' [Enter to keep]: ", i+1, preview, oldColor, charCode)
 			rl.SetPrompt(prompt)
 			
 			line, err := rl.Readline()
@@ -110,8 +110,15 @@ func main() {
 			}
 			
 			input := strings.TrimSpace(line)
-			if input == "" {
+			if input == "" || strings.ToLower(input) == "keep" {
 				newColors[i] = oldColor
+			} else if strings.ToLower(input) == "random" {
+				// generate random hex
+				r := rand.Intn(256)
+				g := rand.Intn(256)
+				b := rand.Intn(256)
+				newColors[i] = fmt.Sprintf("#%02X%02X%02X", r, g, b)
+				fmt.Printf(" -> Randomly picked: %s\n", newColors[i])
 			} else {
 				// auto-prepend '#' if missing
 				if !strings.HasPrefix(input, "#") && len(input) == 6 {
